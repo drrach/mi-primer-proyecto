@@ -27,3 +27,9 @@ La tabla `bronze_transactions` tiene [rows] filas, [distinct_ids] identificadore
 - **Variedad:** se usaron CSV, Parquet y JSON, incluido un campo anidado en los eventos.
 - **Veracidad:** hay identificadores potencialmente duplicados e importes que requieren validación antes de usarlos en análisis.
 - **Valor:** después de controlar la calidad y preparar Silver, los datos pueden servir para analizar transacciones, productos, clientes y eventos.
+
+## Desafio
+Consigna 1:
+1. Apareció el campo app_version.
+2. El valor nuevo de event_type es refund.
+3. El lote nuevo contiene 151 filas y 150 valores distintos de event_id. Por lo tanto, hay un identificador repetido en el lote.

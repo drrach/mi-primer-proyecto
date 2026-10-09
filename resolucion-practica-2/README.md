@@ -59,10 +59,18 @@ aceptadas y 2 registros rechazados.
 
 | Concepto | Cantidad |
 |---|---:|
-| Filas físicas recibidas en Bronze | [valor] |
-| Aceptadas según el resumen del lote | [valor] |
-| Rechazadas según el resumen del lote | [valor] |
-| Transacciones vigentes en Silver del lote | [valor] |
+| Filas físicas recibidas en Bronze | 204 |
+| Aceptadas según el resumen del lote | 200 |
+| Rechazadas según el resumen del lote | 2 |
+| Transacciones vigentes en Silver del lote | 200 |
+
+Las 200 transacciones aceptadas del resumen coinciden con las
+200 transacciones vigentes en Silver del lote.
+
+Bronze contiene 204 filas físicas. Las aceptadas y rechazadas suman
+202, por lo que hay 2 filas adicionales cuya causa debe verificarse
+en Bronze; estos conteos por sí solos no permiten determinar si son
+duplicados o versiones anteriores.
 
 Consultas utilizadas:
 
@@ -70,11 +78,21 @@ Consultas utilizadas:
 SELECT *
 FROM workspace.bigdata_drrach.gold_batch_summary
 WHERE source_batch_id = 'batch_008';
+
+SELECT
+    'Filas físicas recibidas en Bronze' AS concepto,
+    COUNT(*) AS cantidad
+FROM workspace.bigdata_drrach.bronze_transactions_incremental
+WHERE source_batch_id = 'batch_008'
+
+UNION ALL
+
+SELECT
+    'Transacciones vigentes en Silver del lote' AS concepto,
+    COUNT(*) AS cantidad
+FROM workspace.bigdata_drrach.silver_transactions
+WHERE source_batch_id = 'batch_008';
 ```
-
-[Agregar las consultas utilizadas para completar y reconciliar
-las cantidades.]
-
 ## Por qué COPY INTO y MERGE resuelven problemas diferentes
 
 COPY INTO controla la incorporación de archivos a Bronze y evita

@@ -46,6 +46,14 @@ ejecución del Job comparó sus métricas con el registro inmediatamente
 anterior de la auditoría y superó el control de igualdad.
 La auditoría agregó una fila por cada ejecución de validate.
 
+### Cantidades aceptadas y rechazadas — batch_008
+
+| Lote | Aceptadas | Rechazadas |
+|---|---:|---:|
+| batch_008 | 200 | 2 |
+
+Según gold_batch_summary, el lote batch_008 tiene 200 transacciones
+aceptadas y 2 registros rechazados.
 ![Primera ejecución](imagenes/ejecucion-1.png)
 
 ![Segunda ejecución](imagenes/ejecucion-2.png)

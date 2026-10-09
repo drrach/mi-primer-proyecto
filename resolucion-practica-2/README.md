@@ -10,7 +10,7 @@
 ## Job y dependencias
 
 - Nombre exacto del Job: bigdata_2<student_id>_silver_gold
-- URL del Job: [pegar URL]
+- URL del Job: [•	https://dbc-4b1b6668-73d5.cloud.databricks.com/jobs/302407002750599?o=7474651579613320]
 
 Las tareas se ejecutan en este orden:
 
@@ -19,7 +19,9 @@ ingest_bronze → build_silver → build_gold → validate
 Cada tarea posterior se ejecuta únicamente si su dependencia
 terminó correctamente.
 
-![DAG del Job](imagenes/dag.png)
+### DAG del Job
+
+![DAG del Job con las cuatro tareas](dag_job.png)
 
 ## Primera y segunda ejecución
 

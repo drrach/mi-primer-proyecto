@@ -112,7 +112,7 @@ la entrada y aplicar correctamente el MERGE.
 
 ### Pregunta 1
 
-**Enunciado:** [copiar pregunta]
+**Enunciado:** ¿Qué día tuvo el mayor monto vendido y ese día también fue el de mayor cantidad de transacciones?
 
 ![Visualización 1](imagenes/visualizacion-1.png)
 
@@ -126,7 +126,7 @@ la entrada y aplicar correctamente el MERGE.
 
 ### Pregunta 2
 
-**Enunciado:** [copiar pregunta]
+**Enunciado:** ¿Qué canal de pago presenta la mayor tasa de fraude? ¿La conclusión se sostiene al considerar el número de transacciones de cada canal?
 
 ![Visualización 2](imagenes/visualizacion-2.png)
 
@@ -140,7 +140,7 @@ la entrada y aplicar correctamente el MERGE.
 
 ### Pregunta 3
 
-**Enunciado:** [copiar pregunta]
+**Enunciado:** ¿Qué combinación de país y categoría genera el mayor monto? ¿Existe una categoría dominante en todos los países o cambia según el mercado?
 
 ![Visualización 3](imagenes/visualizacion-3.png)
 
@@ -154,7 +154,7 @@ la entrada y aplicar correctamente el MERGE.
 
 ### Pregunta 4
 
-**Enunciado:** [copiar pregunta]
+**Enunciado:** ¿Qué proporción de cada lote fue aceptada y rechazada? ¿El lote nuevo presenta una calidad diferente del lote inicial?
 
 ![Visualización 4](imagenes/visualizacion-4.png)
 

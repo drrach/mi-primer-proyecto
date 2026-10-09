@@ -116,12 +116,116 @@ la entrada y aplicar correctamente el MERGE.
 
 ![Visualización 1](imagenes/visualizacion-1.png)
 
-**Respuesta:** [conclusión explícita, con categoría y valores]
+**Respuesta:** 
 
 **Consulta utilizada:**
 
-```sql
--- Pegar consulta real.
+```# Agregar con Spark antes de convertir a Pandas.
+from pyspark.sql import functions as F
+import matplotlib.pyplot as plt
+
+# Agregar con Spark antes de convertir a Pandas.
+daily_totals = (
+    spark.table(daily)
+    .groupBy("sale_date")
+    .agg(
+        F.sum("total_amount").alias("monto_total"),
+        F.sum("transaction_count").alias("transacciones")
+    )
+    .withColumn(
+        "ticket_promedio",
+        F.when(
+            F.col("transacciones") > 0,
+            F.col("monto_total") / F.col("transacciones")
+        )
+    )
+    .orderBy("sale_date")
+)
+
+assert daily_totals.count() > 0, "La tabla Gold no contiene datos."
+
+# Sólo el resultado agregado se convierte a Pandas.
+plot_data = daily_totals.toPandas()
+plot_data["monto_total"] = plot_data["monto_total"].astype(float)
+
+fig, axes = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+
+axes[0].plot(
+    plot_data["sale_date"],
+    plot_data["monto_total"],
+    marker="o",
+    color="#2563eb"
+)
+axes[0].set_title("Evolución diaria del monto vendido y las transacciones")
+axes[0].set_ylabel("Monto vendido\n(unidades monetarias)")
+axes[0].grid(alpha=0.25)
+
+axes[1].plot(
+    plot_data["sale_date"],
+    plot_data["transacciones"],
+    marker="o",
+    color="#16a34a"
+)
+axes[1].set_ylabel("Transacciones\n(cantidad)")
+axes[1].set_xlabel("Fecha de venta")
+axes[1].grid(alpha=0.25)
+
+fig.autofmt_xdate()
+fig.tight_layout()
+plt.show()
+
+# Identificar máximos, incluyendo posibles empates.
+max_monto = plot_data["monto_total"].max()
+max_transacciones = plot_data["transacciones"].max()
+
+dias_monto = set(
+    plot_data.loc[
+        plot_data["monto_total"] == max_monto, "sale_date"
+    ]
+)
+dias_transacciones = set(
+    plot_data.loc[
+        plot_data["transacciones"] == max_transacciones, "sale_date"
+    ]
+)
+
+def fechas(dias):
+    return ", ".join(str(dia) for dia in sorted(dias))
+
+print(
+    f"Mayor monto vendido: {max_monto:,.2f} unidades monetarias "
+    f"el día o los días {fechas(dias_monto)}."
+)
+print(
+    f"Mayor cantidad de transacciones: {max_transacciones:,.0f} "
+    f"el día o los días {fechas(dias_transacciones)}."
+)
+
+coinciden = dias_monto & dias_transacciones
+
+if coinciden:
+    print(
+        f"Los máximos coinciden en {fechas(coinciden)}. "
+        "Ese día se alcanzaron tanto el mayor monto como la mayor "
+        "cantidad de operaciones. Esto no implica que el ticket "
+        "promedio haya sido el más alto."
+    )
+else:
+    print(
+        "Los máximos no coinciden. El día de mayor monto tuvo menos "
+        "operaciones que el día de mayor cantidad de transacciones, "
+        "pero un ticket promedio más alto: cada operación aportó, "
+        "en promedio, más dinero."
+    )
+
+print("\nTicket promedio en los días de máximo monto o cantidad:")
+display(
+    daily_totals.where(
+        (F.col("monto_total") == F.lit(max_monto)) |
+        (F.col("transacciones") == F.lit(int(max_transacciones)))
+    )
+)
+
 ```
 
 ### Pregunta 2

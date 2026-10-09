@@ -28,17 +28,23 @@ terminó correctamente.
 La segunda ejecución se realizó sin volver a ejecutar el generador,
 manteniendo los mismos parámetros y archivos de entrada.
 
+### Primera y segunda ejecución — batch_008
+
 | Métrica | Primera ejecución | Segunda ejecución |
 |---|---:|---:|
-| Cantidad de transacciones en Silver | [valor] | [valor] |
-| Cantidad de registros en cuarentena | [valor] | [valor] |
-| [Métrica Gold informada por validate] | [valor] | [valor] |
-| [Otra métrica informada por validate] | [valor] | [valor] |
-| idempotence_compared | [resultado] | True |
+| Cantidad de transacciones en Silver | 51146 | 51146 |
+| Cantidad de registros en cuarentena | 69 | 69 |
+| Cantidad de filas de gold_daily_sales | 1003 | 1003 |
+| Monto total en Gold | 50942317.39 | 50942317.39 |
+| idempotence_compared | False | True |
+| ID de ejecución | 1117264922659891 | 1072656153727934 |
 | Estado de validate | Succeeded | Succeeded |
 
-Las métricas de negocio permanecieron iguales.
-La auditoría incorporó una fila por ejecución.
+Las métricas de negocio fueron iguales en ambas ejecuciones del Job.
+Entre ambas hubo ejecuciones interactivas de validación. La segunda
+ejecución del Job comparó sus métricas con el registro inmediatamente
+anterior de la auditoría y superó el control de igualdad.
+La auditoría agregó una fila por cada ejecución de validate.
 
 ![Primera ejecución](imagenes/ejecucion-1.png)
 

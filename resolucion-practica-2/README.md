@@ -54,11 +54,8 @@ La auditoría agregó una fila por cada ejecución de validate.
 
 Según gold_batch_summary, el lote batch_008 tiene 200 transacciones
 aceptadas y 2 registros rechazados.
-![Primera ejecución](imagenes/ejecucion-1.png)
 
-![Segunda ejecución](imagenes/ejecucion-2.png)
-
-## Reconciliación de batch_002
+## Reconciliación de batch_008
 
 | Concepto | Cantidad |
 |---|---:|
@@ -72,7 +69,7 @@ Consultas utilizadas:
 ```sql
 SELECT *
 FROM workspace.bigdata_drrach.gold_batch_summary
-WHERE source_batch_id = 'batch_002';
+WHERE source_batch_id = 'batch_008';
 ```
 
 [Agregar las consultas utilizadas para completar y reconciliar

@@ -9,7 +9,7 @@
 
 ## Job y dependencias
 
-- Nombre exacto del Job: [nombre]
+- Nombre exacto del Job: bigdata_2<student_id>_silver_gold
 - URL del Job: [pegar URL]
 
 Las tareas se ejecutan en este orden:

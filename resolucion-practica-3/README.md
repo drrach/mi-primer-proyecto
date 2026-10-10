@@ -153,8 +153,8 @@ Delta permite actualizaciones sobre Parquet, pero su costo depende del mecanismo
 
 # Resolución práctica 3 — Modelos NoSQL
 
-- **Nombre:** Anibal Cheluja
-- **student_id:** [completar]
+- **Nombre:** Ricardo Anibal Cheluja
+- **student_id:** drrach
 - **Escala:** small
 
 Los resultados corresponden a las ejecuciones de los notebooks de la práctica.

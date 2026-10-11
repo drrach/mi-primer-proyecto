@@ -341,7 +341,7 @@ print(
 )
 ```
 
-### Pregunta 3
+### Pregunta 3 
 
 **Enunciado:** ¿Qué combinación de país y categoría genera el mayor monto? ¿Existe una categoría dominante en todos los países o cambia según el mercado?
 

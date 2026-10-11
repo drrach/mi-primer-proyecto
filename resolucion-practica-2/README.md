@@ -345,7 +345,7 @@ print(
 
 **Enunciado:** ¿Qué combinación de país y categoría genera el mayor monto? ¿Existe una categoría dominante en todos los países o cambia según el mercado?
 
-![Visualización 3] (Monto_vendido.png)
+![Visualización 3](Monto_vendido.png)
 
 **Consulta utilizada:**
 

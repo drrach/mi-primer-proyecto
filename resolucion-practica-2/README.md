@@ -114,7 +114,7 @@ la entrada y aplicar correctamente el MERGE.
 
 **Enunciado:** ¿Qué día tuvo el mayor monto vendido y ese día también fue el de mayor cantidad de transacciones?
 
-![Visualización 1](imagenes/visualizacion-1.png)
+![Visualización 1](ventas_por_categoria.png)
 
 **Respuesta:** 
 

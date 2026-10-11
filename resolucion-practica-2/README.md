@@ -232,14 +232,113 @@ display(
 
 **Enunciado:** ¿Qué canal de pago presenta la mayor tasa de fraude? ¿La conclusión se sostiene al considerar el número de transacciones de cada canal?
 
-![Visualización 2](imagenes/visualizacion-2.png)
-
-**Respuesta:** [conclusión explícita basada en los resultados]
+![Visualización 2](Canal_y_fraude.png)
 
 **Consulta utilizada:**
 
-```sql
--- Pegar consulta real.
+```# Tu solución. Recalculá la tasa global como suma(fraud_transactions) / suma(transaction_count).
+# Evitá promediar directamente fraud_rate entre grupos.
+
+from pyspark.sql import functions as F
+import matplotlib.pyplot as plt
+
+gold = spark.table(daily)
+
+# Identificar el nombre de la columna de canal.
+channel_col = next(
+    (c for c in ["payment_channel", "channel", "payment_method"]
+     if c in gold.columns),
+    None
+)
+
+assert channel_col is not None, (
+    f"No se encontró la columna de canal. Columnas: {gold.columns}"
+)
+
+# Agregar con Spark: no promediar fraud_rate.
+channel_metrics = (
+    gold.groupBy(channel_col)
+    .agg(
+        F.sum("fraud_transactions").alias("fraudes"),
+        F.sum("transaction_count").alias("transacciones")
+    )
+    .where(F.col("transacciones") > 0)
+    .withColumn(
+        "tasa_fraude_pct",
+        100.0 * F.col("fraudes") / F.col("transacciones")
+    )
+    .orderBy(F.desc("tasa_fraude_pct"), F.desc("transacciones"))
+)
+
+display(channel_metrics)
+
+# Convertir únicamente el resultado agregado.
+plot_data = channel_metrics.toPandas()
+assert not plot_data.empty, "No hay transacciones para analizar."
+
+plot_data["tasa_fraude_pct"] = (
+    plot_data["tasa_fraude_pct"].astype(float)
+)
+labels = plot_data[channel_col].fillna("Sin canal").astype(str)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
+positions = list(range(len(plot_data)))
+
+axes[0].barh(
+    positions, plot_data["tasa_fraude_pct"], color="#dc2626"
+)
+axes[0].set_yticks(positions)
+axes[0].set_yticklabels(labels)
+axes[0].invert_yaxis()
+axes[0].set_title("Tasa de fraude por canal")
+axes[0].set_xlabel("Transacciones fraudulentas (%)")
+axes[0].set_ylabel("Canal de pago")
+axes[0].grid(axis="x", alpha=0.25)
+
+axes[1].barh(
+    positions, plot_data["transacciones"], color="#2563eb"
+)
+axes[1].set_title("Volumen por canal")
+axes[1].set_xlabel("Transacciones (cantidad)")
+axes[1].grid(axis="x", alpha=0.25)
+
+fig.suptitle("Canal de pago: fraude y volumen de operaciones")
+fig.tight_layout()
+plt.show()
+
+# Tasa global: suma de fraudes / suma de transacciones.
+totals = channel_metrics.agg(
+    F.sum("fraudes").alias("fraudes"),
+    F.sum("transacciones").alias("transacciones")
+).first()
+
+global_rate = 100 * totals.fraudes / totals.transacciones
+
+max_rate = plot_data["tasa_fraude_pct"].max()
+leaders = plot_data[
+    plot_data["tasa_fraude_pct"] == max_rate
+]
+
+print(f"Tasa global de fraude: {global_rate:.2f}%.")
+
+for _, row in leaders.iterrows():
+    share = 100 * row["transacciones"] / totals.transacciones
+    print(
+        f"El canal {row[channel_col]} presenta la mayor tasa observada: "
+        f"{row['tasa_fraude_pct']:.2f}%, con "
+        f"{int(row['fraudes']):,} fraudes sobre "
+        f"{int(row['transacciones']):,} transacciones "
+        f"({share:.1f}% del volumen total)."
+    )
+
+print(
+    "\nLa tasa permite comparar canales considerando su volumen. "
+    "Sin embargo, si el canal líder tiene pocas transacciones, "
+    "su tasa es más sensible a unos pocos casos y la conclusión "
+    "es menos sólida. Un volumen elevado aporta más evidencia, "
+    "aunque estos gráficos por sí solos no demuestran que la "
+    "diferencia entre canales sea estadísticamente significativa."
+)
 ```
 
 ### Pregunta 3

@@ -345,29 +345,290 @@ print(
 
 **Enunciado:** ¿Qué combinación de país y categoría genera el mayor monto? ¿Existe una categoría dominante en todos los países o cambia según el mercado?
 
-![Visualización 3](imagenes/visualizacion-3.png)
-
-**Respuesta:** [conclusión explícita basada en los resultados]
+![Visualización 3](Monto_vendido.png)
 
 **Consulta utilizada:**
 
-```sql
--- Pegar consulta real.
+```from pyspark.sql import functions as F
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Agregar con Spark antes de convertir a Pandas.
+country_category = (
+    spark.table(daily)
+    .groupBy("country", "category")
+    .agg(F.sum("total_amount").alias("monto_total"))
+)
+
+plot_data = country_category.toPandas()
+assert not plot_data.empty, "No hay datos para analizar."
+
+plot_data["monto_total"] = plot_data["monto_total"].astype(float)
+plot_data["country"] = plot_data["country"].fillna("Sin país")
+plot_data["category"] = plot_data["category"].fillna("Sin categoría")
+
+matrix = plot_data.pivot_table(
+    index="country",
+    columns="category",
+    values="monto_total",
+    aggfunc="sum"
+).sort_index()
+
+# Los pares sin registros quedan vacíos, no se interpretan como cero.
+fig, ax = plt.subplots(
+    figsize=(max(9, len(matrix.columns) * 1.5),
+             max(4, len(matrix.index) * 0.7))
+)
+
+heatmap = ax.imshow(
+    matrix.to_numpy(dtype=float),
+    cmap="Blues",
+    aspect="auto"
+)
+
+ax.set_xticks(range(len(matrix.columns)))
+ax.set_xticklabels(matrix.columns, rotation=45, ha="right")
+ax.set_yticks(range(len(matrix.index)))
+ax.set_yticklabels(matrix.index)
+ax.set_title("Monto vendido por país y categoría")
+ax.set_xlabel("Categoría")
+ax.set_ylabel("País")
+
+fig.colorbar(
+    heatmap, ax=ax,
+    label="Monto vendido (unidades monetarias)"
+)
+
+# Anotar los montos para facilitar la comparación.
+threshold = plot_data["monto_total"].max() / 2
+
+for i in range(len(matrix.index)):
+    for j in range(len(matrix.columns)):
+        value = matrix.iloc[i, j]
+        if pd.notna(value):
+            ax.text(
+                j, i, f"{value:,.0f}",
+                ha="center", va="center",
+                color="white" if value > threshold else "black",
+                fontsize=9
+            )
+
+fig.tight_layout()
+plt.show()
+
+# Máximo global, incluyendo posibles empates.
+global_max = plot_data["monto_total"].max()
+global_leaders = plot_data[
+    plot_data["monto_total"] == global_max
+]
+
+print("MÁXIMO GLOBAL")
+for _, row in global_leaders.iterrows():
+    print(
+        f"{row['country']} — {row['category']}: "
+        f"{row['monto_total']:,.2f} unidades monetarias."
+    )
+
+# Categorías líderes por país, incluyendo empates.
+country_max = plot_data.groupby("country")["monto_total"].transform("max")
+leaders = plot_data[
+    plot_data["monto_total"] == country_max
+].sort_values(["country", "category"])
+
+print("\nCATEGORÍAS LÍDERES POR PAÍS")
+for _, row in leaders.iterrows():
+    print(
+        f"{row['country']}: {row['category']} "
+        f"({row['monto_total']:,.2f} unidades monetarias)."
+    )
+
+leader_sets = leaders.groupby("country")["category"].apply(set)
+common_leaders = set.intersection(*leader_sets.tolist())
+
+print("\nCONCLUSIÓN")
+if common_leaders:
+    categories = ", ".join(sorted(common_leaders))
+    print(
+        f"{categories} alcanza el mayor monto en todos los países "
+        "observados, considerando posibles empates."
+    )
+else:
+    print(
+        "La categoría dominante cambia según el mercado: "
+        "no existe una categoría que lidere en todos los países."
+    )
+
+print(
+    "\nEl mapa de calor es adecuado porque cruza países y categorías "
+    "en una misma matriz y utiliza una escala de color común para "
+    "comparar montos e identificar concentraciones de ventas. "
+    "Las celdas vacías representan combinaciones sin registros."
+)
 ```
 
 ### Pregunta 4
 
 **Enunciado:** ¿Qué proporción de cada lote fue aceptada y rechazada? ¿El lote nuevo presenta una calidad diferente del lote inicial?
 
-![Visualización 4](imagenes/visualizacion-4.png)
-
-**Respuesta:** [conclusión explícita basada en los resultados]
+![Visualización 4](Calidad.png)
 
 **Consulta utilizada:**
 
-```sql
--- Pegar consulta real.
+```from pyspark.sql import functions as F
+import matplotlib.pyplot as plt
+
+# Calcular cantidades y proporciones con Spark.
+batch_quality = (
+    spark.table(batch)
+    .groupBy("source_batch_id")
+    .agg(
+        F.sum("accepted_transactions").alias("aceptadas"),
+        F.sum("rejected_transactions").alias("rechazadas")
+    )
+    .withColumn("total", F.col("aceptadas") + F.col("rechazadas"))
+    .withColumn(
+        "aceptadas_pct",
+        F.when(F.col("total") > 0, 100.0 * F.col("aceptadas") / F.col("total"))
+    )
+    .withColumn(
+        "rechazadas_pct",
+        F.when(F.col("total") > 0, 100.0 * F.col("rechazadas") / F.col("total"))
+    )
+    .orderBy("source_batch_id")
+)
+
+display(batch_quality)
+
+# Convertir sólo el resumen a Pandas.
+plot_data = batch_quality.where(F.col("total") > 0).toPandas()
+assert not plot_data.empty, "No hay lotes con registros para comparar."
+
+labels = plot_data["source_batch_id"].fillna("Sin lote").astype(str)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.bar(
+    labels, plot_data["aceptadas_pct"],
+    label="Aceptadas", color="#16a34a"
+)
+ax.bar(
+    labels, plot_data["rechazadas_pct"],
+    bottom=plot_data["aceptadas_pct"],
+    label="Rechazadas", color="#dc2626"
+)
+
+for i, row in plot_data.iterrows():
+    accepted_pct = float(row["aceptadas_pct"])
+    rejected_pct = float(row["rechazadas_pct"])
+
+    ax.text(
+        i, accepted_pct / 2,
+        f"{accepted_pct:.1f}%",
+        ha="center", va="center", color="white"
+    )
+    ax.text(
+        i, 102,
+        f"Rechazo: {rejected_pct:.1f}%\nn={int(row['total']):,}",
+        ha="center", va="bottom", fontsize=9
+    )
+
+ax.set_title("Calidad del pipeline: aceptación y rechazo por lote")
+ax.set_xlabel("Lote")
+ax.set_ylabel("Proporción de registros (%)")
+ax.set_ylim(0, 115)
+ax.set_yticks([0, 20, 40, 60, 80, 100])
+ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
+ax.grid(axis="y", alpha=0.25)
+
+fig.tight_layout()
+plt.show()
+
+print("RESULTADOS POR LOTE")
+for _, row in plot_data.iterrows():
+    print(
+        f"{row['source_batch_id']}: "
+        f"{int(row['aceptadas']):,} aceptadas "
+        f"({row['aceptadas_pct']:.2f}%) y "
+        f"{int(row['rechazadas']):,} rechazadas "
+        f"({row['rechazadas_pct']:.2f}%). "
+        f"Total: {int(row['total']):,}."
+    )
+
+# Completar con los identificadores reales del resumen.
+initial_batch_id = "batch_001"
+new_batch_id = "batch_003"  # Usar "batch_002" si ése es el lote nuevo.
+
+initial = plot_data[
+    plot_data["source_batch_id"] == initial_batch_id
+]
+new = plot_data[
+    plot_data["source_batch_id"] == new_batch_id
+]
+
+print("\nCOMPARACIÓN")
+if initial.empty or new.empty:
+    print(
+        "No se encontraron ambos lotes seleccionados. "
+        "Revisá initial_batch_id y new_batch_id con los nombres "
+        "que aparecen en la tabla. Si el lote inicial no está "
+        "incluido en Gold, no puede compararse con esta fuente."
+    )
+else:
+    initial_rate = float(initial.iloc[0]["rechazadas_pct"])
+    new_rate = float(new.iloc[0]["rechazadas_pct"])
+    difference = new_rate - initial_rate
+
+    print(
+        f"Rechazo inicial ({initial_batch_id}): {initial_rate:.2f}%. "
+        f"Rechazo nuevo ({new_batch_id}): {new_rate:.2f}%."
+    )
+
+    if abs(difference) < 1e-9:
+        print("Ambos lotes presentan la misma proporción de rechazo.")
+    elif difference > 0:
+        print(
+            f"El lote nuevo presenta {difference:.2f} puntos "
+            "porcentuales más de rechazo: menor aceptación "
+            "bajo las reglas de calidad del pipeline."
+        )
+    else:
+        print(
+            f"El lote nuevo presenta {abs(difference):.2f} puntos "
+            "porcentuales menos de rechazo: mayor aceptación "
+            "bajo las reglas de calidad del pipeline."
+        )
+
+print(
+    "\nLIMITACIONES: los porcentajes permiten comparar lotes de "
+    "distintos tamaños, pero en lotes pequeños unos pocos rechazos "
+    "pueden cambiar mucho la tasa. La comparación presupone las "
+    "mismas reglas de validación. Además, una mayor aceptación no "
+    "garantiza que todos los datos sean correctos; si el generador "
+    "introduce errores deliberadamente, el rechazo refleja esa prueba."
+)
+
 ```
+**Respuesta:**
+**Fuente:** `workspace.bigdata_drrach.gold_batch_summary`.
+
+| Lote | Aceptadas | Rechazadas | Total | % aceptadas | % rechazadas |
+|---|---:|---:|---:|---:|---:|
+| Inicial (`initial`) | 49.882 | 51 | 49.933 | 99,90 % | 0,10 % |
+| Batch 8 (`batch_008`) | 200 | 2 | 202 | 99,01 % | 0,99 % |
+| Batch 9 (`batch_009`) | 200 | 2 | 202 | 99,01 % | 0,99 % |
+| Batch 10 (`batch_010`) | 201 | 2 | 203 | 99,01 % | 0,99 % |
+
+Las proporciones se calcularon utilizando:
+
+- **Total:** aceptadas + rechazadas.
+- **Porcentaje de aceptación:** aceptadas / total × 100.
+- **Porcentaje de rechazo:** rechazadas / total × 100.
+
+**Comparación:** los lotes nuevos presentan una mayor proporción de rechazo que el inicial: aproximadamente 0,99 % frente a 0,10 %, una diferencia cercana a 0,89 puntos porcentuales. Por lo tanto, muestran una menor aceptación según las reglas de validación del pipeline. Los tres lotes nuevos tienen proporciones prácticamente iguales.
+
+En cantidades absolutas, el lote inicial tiene más rechazos: 51 frente a 2 por lote nuevo. Sin embargo, contiene muchos más registros, por lo que su tasa de rechazo es menor. Esto demuestra la importancia de comparar porcentajes además de cantidades.
+
+**Limitaciones:** los tamaños son muy distintos. En un lote de unos 200 registros, cada rechazo representa aproximadamente 0,5 puntos porcentuales, por lo que unos pocos casos modifican mucho la tasa. La diferencia observada no demuestra por sí sola un deterioro sistemático de la calidad. La comparación también supone las mismas reglas de validación y debe considerar diferencias en la composición de los datos o errores introducidos deliberadamente por el generador. La aceptación no garantiza que todos los datos sean correctos.
 
 ## Las 20 preguntas de análisis y comprensión
 

@@ -209,7 +209,7 @@ El log conserva:
 
 Por ejemplo, muestra que el cliente 2 pasó de **UY → CL → BR** y que existió el cliente 3. La tabla actual solamente muestra el estado final.
 
-## Cierre
+## Cierre (esto dijeron de no hacerlo)
 
 ### 20. Elección del motor
 

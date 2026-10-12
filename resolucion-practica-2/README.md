@@ -340,6 +340,8 @@ print(
     "diferencia entre canales sea estadísticamente significativa."
 )
 ```
+**Respuesta:** 
+La combinación que genera el mayor monto vendido es Brasil (BR) y la categoría home, con 2.388.062,02 unidades monetarias. No existe una categoría dominante en todos los países: books lidera en Argentina, Chile y México, mientras que home encabeza las ventas en Brasil y Uruguay. En Chile, la diferencia entre ambas es pequeña: aproximadamente 8.655 unidades monetarias.
 
 ### Pregunta 3 
 

@@ -677,6 +677,8 @@ Se utiliza **`COUNT(*)`** porque se cuentan todas las filas recibidas, incluidos
 
 ### 2. Aceptadas, rechazadas y reconciliación con Gold
 
+Los resultados por lote fueron:
+
 | Lote | Aceptadas en Silver | Aceptadas en Gold | Rechazadas en cuarentena | Rechazadas en Gold | Reconciliación |
 |---|---:|---:|---:|---:|---|
 | initial | 49.882 | 49.882 | 51 | 51 | Coincide |
@@ -690,22 +692,31 @@ Se utiliza **`COUNT(*)`** porque se cuentan todas las filas recibidas, incluidos
 | batch_009 | 200 | 200 | 2 | 2 | Coincide |
 | batch_010 | 201 | 201 | 2 | 2 | Coincide |
 
-La reconciliación coincide en todos los lotes: las transacciones vigentes en `silver_transactions` coinciden con `accepted_transactions` de `gold_batch_summary`, y los registros en `silver_transactions_quarantine` coinciden con `rejected_transactions`.
+**La reconciliación coincide en todos los lotes:** el número de transacciones vigentes en `silver_transactions` es igual a `accepted_transactions` de `gold_batch_summary`, y el número de registros en `silver_transactions_quarantine` coincide con `rejected_transactions`.
+
+Estos conteos corresponden al **estado actual de Silver**, que conserva una única versión vigente por transacción. Por eso, la suma de aceptadas y rechazadas no necesariamente coincide con las filas físicas de Bronze, donde también se conservan versiones repetidas.
+
+La consulta utilizada fue:
 
 ```sql
 WITH aceptadas AS (
-    SELECT source_batch_id, COUNT(*) AS aceptadas
-    FROM workspace.bigdata_drrach.silver_transactions
+    SELECT
+        source_batch_id,
+        COUNT(*) AS aceptadas
+    FROM silver_transactions
     GROUP BY source_batch_id
 ),
 rechazadas AS (
-    SELECT source_batch_id, COUNT(*) AS rechazadas
-    FROM workspace.bigdata_drrach.silver_transactions_quarantine
+    SELECT
+        source_batch_id,
+        COUNT(*) AS rechazadas
+    FROM silver_transactions_quarantine
     GROUP BY source_batch_id
 ),
 observado AS (
     SELECT
-        COALESCE(a.source_batch_id, r.source_batch_id) AS source_batch_id,
+        COALESCE(a.source_batch_id, r.source_batch_id)
+            AS source_batch_id,
         COALESCE(a.aceptadas, 0) AS aceptadas,
         COALESCE(r.rechazadas, 0) AS rechazadas
     FROM aceptadas a
@@ -720,23 +731,28 @@ SELECT
     g.rejected_transactions AS rechazadas_gold,
     CASE
         WHEN g.source_batch_id IS NULL THEN 'SIN RESUMEN GOLD'
-        WHEN COALESCE(o.aceptadas, 0) = g.accepted_transactions
-         AND COALESCE(o.rechazadas, 0) = g.rejected_transactions
+        WHEN
+            COALESCE(o.aceptadas, 0) = g.accepted_transactions
+            AND
+            COALESCE(o.rechazadas, 0) = g.rejected_transactions
         THEN 'COINCIDE'
         ELSE 'REVISAR'
     END AS reconciliacion
 FROM observado o
-FULL OUTER JOIN workspace.bigdata_drrach.gold_batch_summary g
+FULL OUTER JOIN gold_batch_summary g
     ON o.source_batch_id = g.source_batch_id
 ORDER BY
     CASE
-        WHEN COALESCE(o.source_batch_id, g.source_batch_id) = 'initial'
-        THEN 0 ELSE 1
+        WHEN COALESCE(o.source_batch_id, g.source_batch_id)
+            = 'initial' THEN 0
+        ELSE 1
     END,
     lote;
 ```
 
-Estos conteos corresponden al estado actual de Silver, que conserva una única versión vigente por transacción. Una corrección posterior puede cambiar el lote asociado a una transacción. Por eso, los conteos no necesariamente equivalen a las aceptaciones históricas de cada ingesta ni a las filas físicas de Bronze.
+La columna `reconciliacion` debe mostrar **`COINCIDE`** para todos los lotes.
+
+**Atención:** Silver conserva la versión vigente. Una corrección posterior puede cambiar el lote al que pertenece una transacción; estos conteos no necesariamente equivalen al número de registros aceptados durante cada ingesta histórica.
 
 ### 3. Motivos de rechazo por lote
 

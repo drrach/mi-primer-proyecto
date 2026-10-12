@@ -645,7 +645,6 @@ En cantidades absolutas, el lote inicial tiene más rechazos: 51 frente a 2 por 
 
 ## Las 20 preguntas de análisis y comprensión
 
-````
 **1. Filas físicas recibidas por lote**
 
 En bronze_transactions_incremental, la cantidad de **filas físicas recibidas por lote** fue:
@@ -1181,4 +1180,3 @@ Si **build_silver falla**, **build_gold no se ejecuta y validate tampoco**, siem
 En el DAG, build_gold depende del éxito de build_silver, y validate depende del éxito de build_gold. Así se evita reconstruir Gold a partir de una actualización fallida de Silver y validar como completa una ejecución que no terminó.
 
 **Las tablas Gold de una ejecución anterior pueden seguir existiendo**, pero no se actualizan ni se validan como resultado de la ejecución fallida.
-````

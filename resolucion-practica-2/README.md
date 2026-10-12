@@ -645,11 +645,12 @@ En cantidades absolutas, el lote inicial tiene más rechazos: 51 frente a 2 por 
 
 ## Las 20 preguntas de análisis y comprensión
 
-### 1. Filas físicas recibidas por lote
+````
+**1. Filas físicas recibidas por lote**
 
-En `bronze_transactions_incremental`, la cantidad de **filas físicas recibidas por lote** fue:
+En bronze_transactions_incremental, la cantidad de **filas físicas recibidas por lote** fue:
 
-| Lote | Filas físicas |
+| **Lote** | **Filas físicas** |
 |---|---:|
 | batch_002 | 24 |
 | batch_003 | 24 |
@@ -673,13 +674,13 @@ GROUP BY source_batch_id
 ORDER BY source_batch_id;
 ```
 
-Se utiliza **`COUNT(*)`** porque se cuentan todas las filas recibidas, incluidos registros inválidos y versiones repetidas de una transacción. El lote `initial` no aparece en este resultado porque la consulta corresponde a la tabla de ingesta incremental.
+Se utiliza **COUNT(*)** porque se cuentan todas las filas recibidas, incluidos registros inválidos y versiones repetidas de una transacción. El lote initial no aparece en este resultado porque la consulta corresponde a la tabla de ingesta incremental.
 
-### 2. Aceptadas, rechazadas y reconciliación con Gold
+**2. Aceptadas, rechazadas y reconciliación con Gold**
 
 Los resultados por lote fueron:
 
-| Lote | Aceptadas en Silver | Aceptadas en Gold | Rechazadas en cuarentena | Rechazadas en Gold | Reconciliación |
+| **Lote** | **Aceptadas en Silver** | **Aceptadas en Gold** | **Rechazadas en cuarentena** | **Rechazadas en Gold** | **Reconciliación** |
 |---|---:|---:|---:|---:|---|
 | initial | 49.882 | 49.882 | 51 | 51 | Coincide |
 | batch_002 | 21 | 21 | 2 | 2 | Coincide |
@@ -692,7 +693,7 @@ Los resultados por lote fueron:
 | batch_009 | 200 | 200 | 2 | 2 | Coincide |
 | batch_010 | 201 | 201 | 2 | 2 | Coincide |
 
-**La reconciliación coincide en todos los lotes:** el número de transacciones vigentes en `silver_transactions` es igual a `accepted_transactions` de `gold_batch_summary`, y el número de registros en `silver_transactions_quarantine` coincide con `rejected_transactions`.
+**La reconciliación coincide en todos los lotes:** el número de transacciones vigentes en silver_transactions es igual a accepted_transactions de gold_batch_summary, y el número de registros en silver_transactions_quarantine coincide con rejected_transactions.
 
 Estos conteos corresponden al **estado actual de Silver**, que conserva una única versión vigente por transacción. Por eso, la suma de aceptadas y rechazadas no necesariamente coincide con las filas físicas de Bronze, donde también se conservan versiones repetidas.
 
@@ -750,18 +751,19 @@ ORDER BY
     lote;
 ```
 
-La columna `reconciliacion` debe mostrar **`COINCIDE`** para todos los lotes.
+La columna coincide debe ser true para todos los lotes.
 
 **Atención:** Silver conserva la versión vigente. Una corrección posterior puede cambiar el lote al que pertenece una transacción; estos conteos no necesariamente equivalen al número de registros aceptados durante cada ingesta histórica.
 
-### 3. Motivos de rechazo por lote
+**3. Motivos de rechazo por lote**
 
-En cuarentena aparecen dos motivos:
+En silver_transactions_quarantine aparecen **dos motivos de rechazo**:
 
-- `INVALID_AMOUNT`: importe inválido; los registros observados tienen `amount = 'N/A'`.
-- `UNKNOWN_CUSTOMER`: identificador de cliente sin correspondencia en la dimensión de clientes.
+- **INVALID_AMOUNT**: importe inválido; los registros observados tienen amount = 'N/A'.
 
-| Lote | INVALID_AMOUNT | UNKNOWN_CUSTOMER | Total rechazadas |
+- **UNKNOWN_CUSTOMER**: identificador de cliente sin correspondencia en la dimensión de clientes.
+
+| **Lote** | **INVALID_AMOUNT** | **UNKNOWN_CUSTOMER** | **Total rechazadas** |
 |---|---:|---:|---:|
 | initial | 51 | 0 | 51 |
 | batch_002 | 1 | 1 | 2 |
@@ -774,6 +776,12 @@ En cuarentena aparecen dos motivos:
 | batch_009 | 1 | 1 | 2 |
 | batch_010 | 1 | 1 | 2 |
 | **Total** | **60** | **9** | **69** |
+
+**Los lotes incrementales muestran el patrón esperado de los casos inválidos del generador:** un importe N/A y un cliente desconocido por lote. Los clientes rechazados tienen customer_id = 1099 en los lotes 002–004 y 5999 en los lotes 005–010.
+
+Los resultados son **compatibles con esos casos introducidos**, aunque confirmar la coincidencia exacta requiere revisar el código del generador. En el lote initial, los 51 rechazos corresponden exclusivamente a importes inválidos.
+
+La consulta utilizada para resumirlos es:
 
 ```sql
 SELECT
@@ -788,15 +796,11 @@ ORDER BY
     quality_reason;
 ```
 
-Los lotes incrementales muestran un importe `N/A` y un cliente desconocido por lote. Los clientes rechazados tienen `customer_id = 1099` en los lotes 002–004 y `5999` en los lotes 005–010.
+**4. Versiones de la transacción 42**
 
-Los resultados son compatibles con los casos inválidos introducidos por el generador, aunque confirmar la coincidencia exacta requiere revisar su código. En `initial`, los 51 rechazos corresponden exclusivamente a importes inválidos.
+La transacción **42 tiene 10 versiones en bronze_transactions_all**: una del lote initial y nueve de los lotes incrementales batch_002 a batch_010.
 
-### 4. Versiones de la transacción 42
-
-La transacción `42` tiene **10 versiones en Bronze**: una del lote `initial` y nueve de los lotes `batch_002` a `batch_010`.
-
-| transaction_id | source_batch_id | amount | updated_at |
+| **transaction_id** | **source_batch_id** | **amount** | **updated_at** |
 |---|---|---:|---|
 | 42 | initial | 600.11 | 2026-03-06 02:07:52 |
 | 42 | batch_002 | 1999.99 | 2026-03-10 02:00:00 |
@@ -809,36 +813,37 @@ La transacción `42` tiene **10 versiones en Bronze**: una del lote `initial` y 
 | 42 | batch_009 | 1999.99 | 2026-03-17 02:00:00 |
 | **42** | **batch_010** | **1999.99** | **2026-03-18 02:00:00** |
 
-En Silver quedó vigente la versión de `batch_010`, correspondiente al mayor `updated_at`. `transaction_id` identifica la transacción, `source_batch_id` permite rastrear el origen y `amount` muestra la corrección de 600.11 a 1999.99.
+En **silver_transactions quedó vigente únicamente la versión de batch_010**, según el resultado de Silver.
+
+Esta elección corresponde a la versión con el **mayor updated_at**. La columna transaction_id identifica la misma transacción, source_batch_id permite rastrear su origen y amount muestra la corrección del importe original de **600.11 a 1999.99**. Bronze conserva las diez versiones para trazabilidad, mientras que Silver mantiene la versión vigente.
+
+La consulta utilizada es:
 
 ```sql
--- Versiones recibidas en Bronze.
-SELECT
-    transaction_id,
-    amount,
-    source_batch_id,
-    event_ts,
-    updated_at,
-    device_id,
-    is_fraud
-FROM workspace.bigdata_drrach.bronze_transactions_all
+-- Todas las versiones recibidas.
+
+SELECT *
+FROM bronze_transactions_all
 WHERE TRY_CAST(transaction_id AS BIGINT) = 42
 ORDER BY updated_at DESC;
 
--- Cantidad de versiones.
-SELECT COUNT(*) AS versiones_en_bronze
-FROM workspace.bigdata_drrach.bronze_transactions_all
+-- Cantidad de filas/versiones recibidas en Bronze.
+
+SELECT
+    COUNT(*) AS versiones_en_bronze
+FROM bronze_transactions_all
 WHERE TRY_CAST(transaction_id AS BIGINT) = 42;
 
--- Versión vigente.
+-- Versión vigente en Silver.
+
 SELECT *
-FROM workspace.bigdata_drrach.silver_transactions
+FROM silver_transactions
 WHERE transaction_id = 42;
 ```
 
-Bronze conserva las diez versiones para trazabilidad; Silver mantiene la versión vigente.
+**5. Una sola fila por transacción**
 
-### 5. Una sola fila por transacción
+Para comprobar que silver_transactions tiene una sola fila por transaction_id, se puede hacer:
 
 ```sql
 SELECT
@@ -850,49 +855,25 @@ HAVING COUNT(*) > 1
 ORDER BY cantidad DESC;
 ```
 
-El resultado esperado es cero filas. Si la consulta devuelve algún identificador con `cantidad > 1`, la deduplicación falló.
+**El resultado esperado es cero filas:** significa que ningún transaction_id aparece más de una vez.
 
-El control complementario obtuvo:
+**La deduplicación habría fallado si la consulta devuelve algún registro**, porque ese identificador tiene dos o más filas en Silver. Por ejemplo, transaction_id = 42 con cantidad = 2 indicaría un duplicado.
 
-| Control | Resultado |
-|---|---:|
-| Filas en Silver | 51.146 |
-| Identificadores distintos | 51.146 |
-| Identificadores nulos | 0 |
-| Validación | OK: IDs UNICOS Y NO NULOS |
+El segundo control complementa la verificación: debería mostrar **filas_silver = ids_distintos**, **ids_nulos = 0** y **OK: IDs UNICOS Y NO NULOS**.
 
-```sql
-SELECT
-    COUNT(*) AS filas_silver,
-    COUNT(DISTINCT transaction_id) AS ids_distintos,
-    COUNT_IF(transaction_id IS NULL) AS ids_nulos,
-    CASE
-        WHEN COUNT(*) = COUNT(DISTINCT transaction_id)
-         AND COUNT_IF(transaction_id IS NULL) = 0
-        THEN 'OK: IDs UNICOS Y NO NULOS'
-        ELSE 'REVISAR'
-    END AS resultado
-FROM workspace.bigdata_drrach.silver_transactions;
-```
+El control confirma que silver_transactions tiene una sola fila por transaction_id. La cantidad de filas coincide con la cantidad de identificadores distintos y no hay IDs nulos. Por lo tanto, **la deduplicación funcionó correctamente en el estado actual de la tabla**.
 
-La igualdad entre filas e identificadores distintos, junto con la ausencia de IDs nulos, confirma que la deduplicación funcionó en el estado actual de la tabla.
+**6. Tasa de rechazo por lote**
 
-### 6. Tasa de rechazo por lote
+La tasa de rechazo se calculó como:
 
 **Tasa de rechazo (%) = rechazadas / (aceptadas + rechazadas) × 100**
 
-| Lote | Aceptadas | Rechazadas | Total | Tasa de rechazo |
-|---|---:|---:|---:|---:|
-| initial | 49.882 | 51 | 49.933 | 0,1021 % |
-| batch_002 | 21 | 2 | 23 | 8,6957 % |
-| batch_003 | 21 | 2 | 23 | 8,6957 % |
-| batch_004 | 21 | 2 | 23 | 8,6957 % |
-| batch_005 | 200 | 2 | 202 | 0,9901 % |
-| batch_006 | 200 | 2 | 202 | 0,9901 % |
-| batch_007 | 200 | 2 | 202 | 0,9901 % |
-| batch_008 | 200 | 2 | 202 | 0,9901 % |
-| batch_009 | 200 | 2 | 202 | 0,9901 % |
-| batch_010 | 201 | 2 | 203 | 0,9852 % |
+**No es correcto comparar solamente cantidades absolutas cuando los lotes tienen tamaños diferentes.** El lote inicial tiene más rechazos —51—, pero estos representan apenas el **0,1021 %** de sus registros. En cambio, dos rechazos representan el **8,6957 %** en un lote de 23 registros y aproximadamente el **0,99 %** en uno de 202.
+
+Por lo tanto, el lote inicial presenta la **menor proporción de rechazos**. Conviene comparar cantidades y tasas conjuntamente, considerando que en lotes pequeños unos pocos registros pueden modificar considerablemente el porcentaje.
+
+La consulta utilizada fue:
 
 ```sql
 SELECT
@@ -901,27 +882,75 @@ SELECT
     rejected_transactions AS rechazadas,
     accepted_transactions + rejected_transactions AS total,
     ROUND(
-        100.0 * rejected_transactions /
-        NULLIF(accepted_transactions + rejected_transactions, 0),
+        100.0 * accepted_transactions /
+        NULLIF(
+            accepted_transactions + rejected_transactions,
+            0
+        ),
         4
-    ) AS tasa_rechazo_pct
-FROM workspace.bigdata_drrach.gold_batch_summary
+    ) AS aceptadas_pct,
+    ROUND(
+        100.0 * rejected_transactions /
+        NULLIF(
+            accepted_transactions + rejected_transactions,
+            0
+        ),
+        4
+    ) AS rechazadas_pct
+FROM gold_batch_summary
 ORDER BY
     CASE WHEN source_batch_id = 'initial' THEN 0 ELSE 1 END,
     source_batch_id;
+
+-- Comparar cada lote incremental con initial.
+-- Diferencia positiva: mayor rechazo que initial.
+-- Diferencia negativa: menor rechazo que initial.
+
+WITH tasas AS (
+    SELECT
+        source_batch_id,
+        accepted_transactions + rejected_transactions AS total,
+        100.0 * rejected_transactions /
+        NULLIF(
+            accepted_transactions + rejected_transactions,
+            0
+        ) AS rechazo_pct
+    FROM gold_batch_summary
+),
+inicial AS (
+    SELECT *
+    FROM tasas
+    WHERE source_batch_id = 'initial'
+)
+SELECT
+    t.source_batch_id AS lote_nuevo,
+    i.total AS total_initial,
+    t.total AS total_lote_nuevo,
+    ROUND(i.rechazo_pct, 4) AS rechazo_initial_pct,
+    ROUND(t.rechazo_pct, 4) AS rechazo_nuevo_pct,
+    ROUND(
+        t.rechazo_pct - i.rechazo_pct,
+        4
+    ) AS diferencia_puntos_porcentuales
+FROM tasas t
+CROSS JOIN inicial i
+WHERE t.source_batch_id <> 'initial'
+ORDER BY t.source_batch_id;
 ```
 
-No es correcto comparar solamente cantidades absolutas cuando los lotes tienen tamaños diferentes. El lote inicial tiene 51 rechazos, pero representan apenas el 0,1021 %. Dos rechazos representan el 8,6957 % en un lote de 23 registros y aproximadamente el 0,99 % en uno de 202.
+**7. Día con mayor monto y mayor cantidad de transacciones**
 
-Conviene comparar cantidades y proporciones conjuntamente. En lotes pequeños, unos pocos rechazos pueden modificar considerablemente la tasa.
+El **1 de marzo de 2026 (2026-03-01)** presenta ambos máximos en gold_daily_sales:
 
-### 7. Día con mayor monto y mayor cantidad de transacciones
-
-El **1 de marzo de 2026** presenta ambos máximos:
-
-| Fecha | Monto total | Transacciones | Ticket promedio |
+| **Fecha** | **Monto total** | **Cantidad de transacciones** | **Ticket promedio** |
 |---|---:|---:|---:|
 | 2026-03-01 | 7.298.974,49 | 7.225 | 1.010,24 |
+
+**Los máximos coinciden:** ese día registró tanto el mayor monto vendido como la mayor cantidad de operaciones. Esto se confirma porque las columnas maximo_monto y maximo_transacciones son ambas true.
+
+Esta coincidencia no implica que también haya sido el día con el mayor ticket promedio.
+
+La consulta utilizada es:
 
 ```sql
 WITH diario AS (
@@ -929,13 +958,15 @@ WITH diario AS (
         sale_date,
         SUM(total_amount) AS monto,
         SUM(transaction_count) AS transacciones
-    FROM workspace.bigdata_drrach.gold_daily_sales
+    FROM gold_daily_sales
     GROUP BY sale_date
 ),
 ranking AS (
     SELECT
         *,
-        DENSE_RANK() OVER (ORDER BY monto DESC) AS ranking_monto,
+        DENSE_RANK() OVER (
+            ORDER BY monto DESC
+        ) AS ranking_monto,
         DENSE_RANK() OVER (
             ORDER BY transacciones DESC
         ) AS ranking_transacciones
@@ -945,50 +976,57 @@ SELECT
     sale_date AS fecha,
     monto,
     transacciones,
-    ROUND(monto / NULLIF(transacciones, 0), 2) AS ticket_promedio,
+    ROUND(
+        monto / NULLIF(transacciones, 0),
+        2
+    ) AS ticket_promedio,
     ranking_monto = 1 AS maximo_monto,
     ranking_transacciones = 1 AS maximo_transacciones
 FROM ranking
-WHERE ranking_monto = 1 OR ranking_transacciones = 1
+WHERE ranking_monto = 1
+   OR ranking_transacciones = 1
 ORDER BY sale_date;
 ```
 
-Los máximos coinciden: `maximo_monto` y `maximo_transacciones` son ambos `true`. Esto no implica que también sea el día con mayor ticket promedio.
+**8. Canal con mayor tasa global de fraude**
 
-### 8. Canal con mayor tasa global de fraude
+El canal **transfer tiene la mayor tasa global de fraude: 13,8879 %**, con **2.359 fraudes sobre 16.986 transacciones**. **No corresponde promediar directamente fraud_rate** porque cada fila puede representar una cantidad diferente de transacciones. Un promedio simple daría el mismo peso a un grupo de 10 operaciones que a uno de 1.000. La división entre las sumas pondera correctamente cada grupo por su volumen y obtiene la proporción real de fraude del canal.
 
-El canal **`transfer`** presenta la mayor tasa global de fraude.
-
-| Canal | Fraudes | Transacciones | Tasa global de fraude |
-|---|---:|---:|---:|
-| transfer | 2.359 | 16.986 | **13,8879 %** |
-| wallet | 2.200 | 16.988 | 12,9503 % |
-| card | 2.150 | 17.172 | 12,5204 % |
+La consulta utilizada fue:
 
 ```sql
+WITH canales AS (
+    SELECT
+        payment_channel,
+        SUM(fraud_transactions) AS fraudes,
+        SUM(transaction_count) AS transacciones
+    FROM gold_daily_sales
+    GROUP BY payment_channel
+)
 SELECT
     payment_channel AS canal,
-    SUM(fraud_transactions) AS fraudes,
-    SUM(transaction_count) AS transacciones,
+    fraudes,
+    transacciones,
     ROUND(
-        100.0 * SUM(fraud_transactions) /
-        NULLIF(SUM(transaction_count), 0),
+        100.0 * fraudes / NULLIF(transacciones, 0),
         4
-    ) AS fraude_pct
-FROM workspace.bigdata_drrach.gold_daily_sales
-GROUP BY payment_channel
-ORDER BY fraude_pct DESC;
+    ) AS fraude_pct,
+    ROUND(
+        100.0 * transacciones /
+        NULLIF(SUM(transacciones) OVER (), 0),
+        2
+    ) AS participacion_volumen_pct
+FROM canales
+ORDER BY fraude_pct DESC, transacciones DESC;
 ```
 
-No corresponde promediar directamente `fraud_rate` porque cada fila puede representar un volumen diferente. Un promedio simple daría el mismo peso a un grupo de 10 operaciones que a uno de 1.000.
+**9. Máximo global y líder por país**
 
-La fórmula `SUM(fraud_transactions) / SUM(transaction_count)` pondera correctamente por el volumen y obtiene la proporción global de fraude de cada canal.
+La combinación **Brasil (BR) y la categoría home** concentra el mayor monto vendido: **2.388.062,02 unidades monetarias**.
 
-### 9. Máximo global y líder por país
+Las combinaciones líderes dentro de cada país son:
 
-La combinación **Brasil (`BR`) y `home`** concentra el mayor monto vendido: **2.388.062,02 unidades monetarias**.
-
-| País | Categoría líder | Monto vendido |
+| **País** | **Categoría líder** | **Monto vendido** |
 |---|---|---:|
 | Brasil (BR) | home | **2.388.062,02** |
 | Uruguay (UY) | home | 2.317.724,80 |
@@ -996,21 +1034,28 @@ La combinación **Brasil (`BR`) y `home`** concentra el mayor monto vendido: **2
 | México (MX) | books | 2.254.517,99 |
 | Chile (CL) | books | 2.200.165,90 |
 
+**La categoría líder cambia según el país:** home encabeza las ventas en Brasil y Uruguay, mientras que books lidera en Argentina, México y Chile.
+
+La consulta utilizada fue:
+
 ```sql
 WITH ventas AS (
     SELECT
         country,
         category,
         SUM(total_amount) AS monto
-    FROM workspace.bigdata_drrach.gold_daily_sales
+    FROM gold_daily_sales
     GROUP BY country, category
 ),
 ranking AS (
     SELECT
         *,
-        DENSE_RANK() OVER (ORDER BY monto DESC) AS ranking_global,
         DENSE_RANK() OVER (
-            PARTITION BY country ORDER BY monto DESC
+            ORDER BY monto DESC
+        ) AS ranking_global,
+        DENSE_RANK() OVER (
+            PARTITION BY country
+            ORDER BY monto DESC
         ) AS ranking_pais
     FROM ventas
 )
@@ -1024,13 +1069,11 @@ WHERE ranking_pais = 1
 ORDER BY monto DESC;
 ```
 
-La categoría líder cambia según el mercado: `home` lidera en Brasil y Uruguay, mientras que `books` encabeza las ventas en Argentina, México y Chile.
+**10. Auditoría de la reejecución de batch_008**
 
-### 10. Auditoría de la reejecución de batch_008
+Al comparar las **dos primeras filas de batch_008 que aparecen en el CSV**, las siguientes métricas permanecen iguales:
 
-Se compararon las ejecuciones de `batch_008` registradas el 9 de octubre de 2026 a las 02:41 y 19:22 UTC.
-
-| Métrica | Ejecución 02:41 UTC | Reejecución 19:22 UTC |
+| **Métrica** | **Ejecución 09/10 a las 02:41 UTC** | **Reejecución 09/10 a las 19:22 UTC** |
 |---|---:|---:|
 | silver_rows | 51.146 | 51.146 |
 | quarantine_rows | 69 | 69 |
@@ -1038,119 +1081,104 @@ Se compararon las ejecuciones de `batch_008` registradas el 9 de octubre de 2026
 | gold_total_amount | 50.942.317,39 | 50.942.317,39 |
 | idempotence_compared | false | **true** |
 
-Permanecen iguales los conteos de Silver, cuarentena y Gold, y el monto total de Gold. Cambian `job_run_id` y `recorded_at`, porque corresponden a ejecuciones diferentes.
+**Los conteos y el monto total no cambian**, lo que evidencia que la reejecución conservó esas métricas sin incrementar los datos. Permanecen iguales estas métricas:
 
-La columna **`idempotence_compared = true`** demuestra que se realizó la comparación de idempotencia. La igualdad de las métricas evidencia que la reejecución conservó esos resultados.
+- **silver_rows**: 51.146 filas.
 
-Estas son las dos primeras filas mostradas para ese lote en el CSV, no las dos primeras cronológicamente. Existe una ejecución anterior, a las 02:16 UTC, con métricas diferentes.
+- **quarantine_rows**: 69 filas.
 
-```sql
-SELECT
-    job_run_id,
-    expected_batch_id,
-    silver_rows,
-    quarantine_rows,
-    gold_rows,
-    gold_total_amount,
-    recorded_at,
-    idempotence_compared
-FROM workspace.bigdata_drrach.pipeline_run_audit
-WHERE expected_batch_id = 'batch_008'
-  AND job_run_id IN (
-      '1117264922659891',
-      '1072656153727934'
-  )
-ORDER BY recorded_at;
-```
+- **gold_rows**: 1.003 filas.
 
-### 11. Qué problema resuelve COPY INTO
+- **gold_total_amount**: 50.942.317,39 unidades monetarias.
 
-`COPY INTO` resuelve la ingesta incremental de archivos en Bronze: incorpora archivos nuevos y permite reejecutar la carga sin volver a insertar los archivos ya procesados.
+La columna **idempotence_compared**, con valor **true** en la reejecución, demuestra que se realizó la comparación de idempotencia. La igualdad de esas métricas confirma que se conservaron los conteos y el monto total.
 
-Utiliza el registro de archivos previamente cargados que mantiene en la tabla Delta de destino, con los metadatos que identifican los archivos de origen.
+**11. ¿Qué resuelve COPY INTO?**
 
-Esta protección funciona a nivel de archivo. Si una transacción aparece en archivos diferentes, puede ingresar varias veces a Bronze. La deduplicación por `transaction_id` se realiza después en Silver.
+COPY INTO resuelve la **ingesta incremental de archivos en Bronze**: incorpora archivos nuevos y permite reejecutar la carga sin volver a insertar los archivos ya procesados.
 
-### 12. Por qué se utiliza UNION ALL
+Para evitar cargar dos veces el mismo archivo físico, utiliza el **registro de archivos previamente cargados que mantiene en la tabla Delta de destino**, con los metadatos que identifican los archivos de origen.
 
-La vista `bronze_transactions_all` utiliza `UNION ALL` para conservar todas las filas de la carga inicial y de los lotes incrementales, incluidas las distintas versiones de una transacción. Esto mantiene la trazabilidad.
+Esta protección funciona **a nivel de archivo**: si una misma transacción aparece en dos archivos diferentes, puede ingresar dos veces a Bronze. La deduplicación por transaction_id se resuelve después en Silver.
 
-Los duplicados de negocio se resuelven en Silver mediante reglas explícitas por `transaction_id`, considerando `updated_at` y los criterios de desempate.
+**12. ¿Por qué UNION ALL?**
 
-Además, `UNION` sólo elimina filas completamente iguales: no resuelve versiones de una transacción que tienen importes o fechas diferentes.
+La vista **bronze_transactions_all usa UNION ALL para conservar todas las filas** de la carga inicial y de los lotes incrementales, incluidas las distintas versiones de una misma transacción. Esto mantiene la trazabilidad y permite auditar qué datos llegaron desde cada origen.
 
-### 13. Uso de initial y event_ts como updated_at
+Los **duplicados de negocio se resuelven en Silver**, donde se aplican reglas explícitas por transaction_id para seleccionar la versión vigente, considerando updated_at y los criterios de desempate.
 
-Las transacciones iniciales reciben `source_batch_id = 'initial'` para identificar su origen histórico y distinguirlas de los lotes incrementales.
+Eliminar duplicados en Bronze podría ocultar información del historial. Además, UNION sólo elimina filas completamente iguales: no resuelve versiones de una misma transacción con importes o fechas diferentes.
 
-Como la carga inicial no tiene una fecha específica de actualización, se utiliza `event_ts` como `updated_at`, estableciendo una referencia temporal para comparar versiones.
+**13. ¿Por qué initial y event_ts como updated_at?**
 
-En la transacción `42`, la versión inicial tiene importe `600.11` y `updated_at = '2026-03-06 02:07:52'`. Las correcciones posteriores pueden reemplazarla en Silver. Quedó vigente `batch_010`, con importe `1999.99` y `updated_at = '2026-03-18 02:00:00'`, la fecha más reciente.
+Las transacciones iniciales reciben **source_batch_id = 'initial'** para identificar que provienen de la carga histórica y distinguirlas de los lotes incrementales.
 
-### 14. Ventaja de try_cast
+Como esa carga no tiene una fecha específica de actualización, se utiliza **event_ts como updated_at**, estableciendo una fecha de referencia para comparar versiones.
 
-`try_cast` devuelve `NULL` cuando un valor como `'N/A'` no puede convertirse a un tipo numérico. Esto permite continuar el procesamiento, clasificar el registro como `INVALID_AMOUNT` y enviarlo a cuarentena.
+En la transacción **42**, la versión inicial tiene importe **600.11** y updated_at = 2026-03-06 02:07:52. Las correcciones incrementales tienen fechas posteriores, por lo que pueden reemplazarla en Silver. Finalmente, queda vigente la versión de **batch_010**, con importe **1999.99** y updated_at = 2026-03-18 02:00:00, la más reciente de las diez versiones.
 
-Un `cast` convencional puede generar un error y detener la ejecución, según la configuración del motor.
+**14. Ventaja de try_cast**
 
-### 15. Asignación de una única quality_reason
+**try_cast devuelve NULL cuando un importe como 'N/A' no puede convertirse a un tipo numérico**, permitiendo que el pipeline continúe y que la regla de calidad clasifique el registro como INVALID_AMOUNT y lo envíe a cuarentena.
 
-Si un registro viola varias reglas, recibe el motivo de la primera condición que se cumple, según el orden del `CASE` o de la cadena de `when`.
+En cambio, un **cast convencional puede generar un error y detener la ejecución**, según la configuración del motor.
 
-Por ejemplo, si tiene importe inválido y cliente desconocido, recibe `INVALID_AMOUNT` si se evalúa primero el importe, o `UNKNOWN_CUSTOMER` si se verifica primero el cliente.
+Así, try_cast permite tratar el dato inválido como un rechazo controlado, sin interrumpir el procesamiento de los demás registros.
 
-El orden establece la prioridad y afecta los conteos por motivo. Estos conteos reflejan el motivo asignado, no todas las fallas presentes en cada registro.
+**15. Una única quality_reason**
 
-### 16. Construcción de _record_key y uso de row_number
+Si un registro viola más de una regla, recibe **el motivo de la primera condición que se cumple**, según el orden del CASE o de la cadena de when.
 
-`_record_key` utiliza el `transaction_id` convertido a número cuando la conversión es válida. Si no puede convertirse, utiliza un hash calculado a partir de los campos del registro.
+Por ejemplo, si tiene un importe inválido y un cliente desconocido, recibirá INVALID_AMOUNT si esa condición se evalúa primero, o UNKNOWN_CUSTOMER si primero se verifica el cliente.
 
-`row_number()` particiona por `_record_key` y ordena las versiones según los criterios del pipeline, como `updated_at` descendente. Se conserva la fila con `row_number = 1`.
+**El orden establece la prioridad de los motivos y afecta los conteos por quality_reason.** Por eso, esos conteos reflejan el motivo asignado a cada registro, no todas las fallas que puede contener.
 
-El hash permite distinguir registros con identificadores inválidos. Sin esa alternativa, podrían agruparse todos bajo `transaction_id = NULL`, conservando sólo uno y perdiendo otros registros que deberían estar disponibles para cuarentena.
+**16. \_record_key y row_number**
 
-Los campos exactos del hash y los criterios de desempate deben verificarse en el código del notebook.
+**\_record_key se construye usando el transaction_id convertido a número cuando la conversión es válida.** Si no puede convertirse, se utiliza como alternativa un **hash calculado a partir de los campos del registro**.
 
-### 17. Cláusulas principales del MERGE
+Luego, row_number() agrupa las filas mediante PARTITION BY \_record_key y ordena sus versiones según los criterios del pipeline, como updated_at descendente. Se conserva la fila con **row_number = 1**. row_number particiona por esa clave y ordena las versiones para seleccionar una fila por grupo. **La fórmula exacta del hash y las columnas del orden deben citarse desde el código.**
 
-El `MERGE` compara los registros entrantes con los existentes mediante `transaction_id`.
+El hash cubre los registros cuyo identificador es inválido o no numérico. Sin esa alternativa, todos podrían quedar agrupados bajo transaction_id = NULL, y la deduplicación conservaría sólo uno, perdiendo otros registros inválidos que deberían quedar disponibles para la cuarentena.
 
-- **`WHEN MATCHED ... UPDATE`**: actualiza una transacción existente cuando se cumple la condición de actualización. Si se exige un `updated_at` posterior, sólo una versión más reciente reemplaza a la vigente.
-- **`WHEN NOT MATCHED ... INSERT`**: inserta una transacción cuyo `transaction_id` todavía no existe en Silver.
+Los campos exactos del hash y los criterios de desempate dependen de la implementación del notebook.
 
-Así se incorporan transacciones nuevas y se aplican correcciones a las existentes.
+**17. Las cláusulas del MERGE**
 
-### 18. Reconstrucción de Gold y MERGE en Silver
+El MERGE de silver_transactions compara los registros entrantes con los existentes mediante **transaction_id**:
 
-Gold se reconstruye completamente porque contiene agregados del estado vigente de Silver. Recalcularlos simplifica la incorporación de nuevas transacciones y correcciones que modifican montos o grupos.
+- **WHEN MATCHED ... UPDATE**: actualiza una fila cuando la transacción ya existe y se cumple la condición de actualización. Si se exige un updated_at posterior, sólo una versión más reciente reemplaza a la vigente; por ejemplo, una corrección de la transacción 42.
 
-Silver se actualiza con `MERGE` porque conserva el detalle y necesita insertar transacciones nuevas o actualizar las existentes.
+- **WHEN NOT MATCHED ... INSERT**: inserta una fila cuando el transaction_id entrante todavía no existe en Silver.
 
-| Estrategia | Ventaja | Limitación |
+Así, el MERGE permite incorporar transacciones nuevas y actualizar las existentes con sus correcciones.
+
+**18. Reconstrucción Gold frente a MERGE en Silver**
+
+Las tablas **Gold se reconstruyen completamente** porque contienen agregados calculados a partir del estado vigente de Silver. Recalcularlos simplifica la incorporación de nuevas transacciones y correcciones que pueden modificar montos, fechas o grupos.
+
+**Silver se actualiza con MERGE** porque conserva el detalle de cada transacción: permite insertar nuevos transaction_id y actualizar los existentes.
+
+| **Estrategia** | **Ventaja** | **Limitación** |
 |---|---|---|
-| Reconstrucción completa de Gold | Recalcula los agregados de forma sencilla y consistente con Silver, incluyendo correcciones. | Reprocesa todos los datos, aumentando tiempo y costo al crecer el volumen. |
-| MERGE en Silver | Permite insertar y corregir transacciones sin reemplazar toda la tabla. | Exige deduplicar la fuente y definir correctamente la clave y las condiciones de actualización. |
+| **Reconstrucción completa de Gold** | Recalcula los agregados de forma sencilla y consistente con Silver, incluyendo correcciones. | Reprocesa todos los datos en cada ejecución, aumentando el tiempo y el costo cuando crece el volumen. |
+| **Actualización de Silver con MERGE** | Permite insertar y corregir transacciones sin reemplazar toda la tabla. | Exige deduplicar la fuente y definir correctamente la clave y las condiciones de actualización para evitar versiones incorrectas. |
 
-### 19. Función de expected_batch_id
+**19. Función de expected_batch_id**
 
-`expected_batch_id` es un parámetro de validación; no participa en la detección del archivo nuevo.
+**expected_batch_id no participa en la detección del archivo nuevo porque es un parámetro de validación, no un filtro de ingesta.**
 
-La tarea `01_ingest_bronze_incremental`, mediante `COPY INTO`, descubre los archivos nuevos en la ubicación de entrada e incorpora `batch_009`, evitando repetir archivos ya cargados.
+La tarea **01_ingest_bronze_incremental**, mediante COPY INTO, descubre los archivos nuevos en la ubicación de entrada e incorpora los registros de **batch_009**, usando el historial de archivos cargados para evitar repetir la ingesta.
 
-La tarea `04_validate_pipeline` utiliza `expected_batch_id = 'batch_009'` para comprobar que el lote esperado fue procesado y aparece en Bronze, Silver y Gold.
+La tarea **04_validate_pipeline** utiliza **expected_batch_id = 'batch_009'** para comprobar que el lote esperado fue procesado y aparece en Bronze, Silver y Gold.
 
-El parámetro indica qué lote validar, pero no determina qué archivo cargar.
+Por eso, cambiar el parámetro indica **qué lote debe validar el pipeline**, pero no determina qué archivo nuevo debe cargar.
 
-### 20. Consecuencias de una falla en build_silver
+**20. Si falla build_silver**
 
-Si `build_silver` falla, `build_gold` y `validate` no se ejecutan, siempre que sus dependencias estén configuradas para ejecutarse sólo cuando las tareas anteriores finalizan correctamente.
+Si **build_silver falla**, **build_gold no se ejecuta y validate tampoco**, siempre que las dependencias estén configuradas para ejecutarse sólo cuando las tareas anteriores terminan correctamente.
 
-`build_gold` depende del éxito de `build_silver`, y `validate` depende del éxito de `build_gold`. Esto evita reconstruir Gold después de una actualización fallida de Silver y validar como completa una ejecución que no terminó.
+En el DAG, build_gold depende del éxito de build_silver, y validate depende del éxito de build_gold. Así se evita reconstruir Gold a partir de una actualización fallida de Silver y validar como completa una ejecución que no terminó.
 
-Las tablas Gold de una ejecución anterior pueden seguir existiendo, pero no se actualizan ni se validan como resultado de la ejecución fallida.
+**Las tablas Gold de una ejecución anterior pueden seguir existiendo**, pero no se actualizan ni se validan como resultado de la ejecución fallida.
 ````
-```sql
--- Pegar consulta real.
-```
-
-[Repetir esta estructura para las preguntas 2 a 20.]

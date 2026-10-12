@@ -647,7 +647,6 @@ En cantidades absolutas, el lote inicial tiene más rechazos: 51 frente a 2 por 
 
 ### 1. Filas físicas recibidas por lote
 
-````markdown
 En `bronze_transactions_incremental`, la cantidad de **filas físicas recibidas por lote** fue:
 
 | Lote | Filas físicas |
@@ -675,7 +674,6 @@ ORDER BY source_batch_id;
 ```
 
 Se utiliza **`COUNT(*)`** porque se cuentan todas las filas recibidas, incluidos registros inválidos y versiones repetidas de una transacción. El lote `initial` no aparece en este resultado porque la consulta corresponde a la tabla de ingesta incremental.
-````
 
 ### 2. Aceptadas, rechazadas y reconciliación con Gold
 

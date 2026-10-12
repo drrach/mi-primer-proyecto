@@ -234,6 +234,11 @@ display(
 
 ![Visualización 2](Canal_y_fraude.png)
 
+**Respuesta:** 
+El canal transfer presenta la mayor tasa de fraude: 13,89 %, con 2.359 transacciones fraudulentas sobre 16.986 operaciones. Le siguen wallet, con aproximadamente 12,9 %, y card, con 12,5 %.
+La conclusión se sostiene al considerar el volumen: los tres canales tienen cantidades similares, cercanas a 17.000 transacciones, y transfer representa el 33,2 % del total. Por lo tanto, su mayor tasa observada no proviene de un canal con muy pocas operaciones.
+Sin embargo, el gráfico permite afirmar que transfer tiene la mayor tasa observada, pero no demuestra por sí solo que la diferencia sea estadísticamente significativa; para evaluarlo harían falta intervalos de confianza o una prueba de comparación de proporciones.
+
 **Consulta utilizada:**
 
 ```# Tu solución. Recalculá la tasa global como suma(fraud_transactions) / suma(transaction_count).
@@ -340,8 +345,6 @@ print(
     "diferencia entre canales sea estadísticamente significativa."
 )
 ```
-**Respuesta:** 
-
 
 ### Pregunta 3 
 

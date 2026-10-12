@@ -117,6 +117,8 @@ la entrada y aplicar correctamente el MERGE.
 ![Visualización 1](Evolucion_del_monto_vendido_y_transacciones.png)
 
 **Respuesta:** 
+El 1 de marzo de 2026 (2026-03-01) tuvo el mayor monto vendido, con 7.298.974,49 unidades monetarias.
+Sí, ese mismo día también registró la mayor cantidad de transacciones: 7.225 operaciones. El ticket promedio fue de 1.010,24 unidades monetarias por transacción, aunque esto no implica que haya sido el ticket promedio más alto del período.
 
 **Consulta utilizada:**
 

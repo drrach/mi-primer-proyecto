@@ -352,6 +352,9 @@ print(
 
 ![Visualización 3](Monto.png) 
 
+**Respuesta:** 
+La combinación que genera el mayor monto vendido es Brasil (BR) y la categoría home, con 2.388.062,02 unidades monetarias. No existe una categoría dominante en todos los países: books lidera en Argentina, Chile y México, mientras que home encabeza las ventas en Brasil y Uruguay. En Chile, la diferencia entre ambas es pequeña: aproximadamente 8.655 unidades monetarias.
+
 **Consulta utilizada:**
 
 ```from pyspark.sql import functions as F
@@ -470,14 +473,15 @@ print(
     "Las celdas vacías representan combinaciones sin registros."
 )
 ```
-**Respuesta:** 
-La combinación que genera el mayor monto vendido es Brasil (BR) y la categoría home, con 2.388.062,02 unidades monetarias. No existe una categoría dominante en todos los países: books lidera en Argentina, Chile y México, mientras que home encabeza las ventas en Brasil y Uruguay. En Chile, la diferencia entre ambas es pequeña: aproximadamente 8.655 unidades monetarias.
 
 ### Pregunta 4
 
 **Enunciado:** ¿Qué proporción de cada lote fue aceptada y rechazada? ¿El lote nuevo presenta una calidad diferente del lote inicial?
 
 ![Visualización 4](Calidad.png)
+
+**Respuesta:** 
+
 
 **Consulta utilizada:**
 

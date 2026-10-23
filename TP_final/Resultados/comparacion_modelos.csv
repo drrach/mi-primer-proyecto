@@ -1,0 +1,4 @@
+modelo,cv_roc_auc_mean,cv_roc_auc_std,test_roc_auc,test_sensitivity,test_specificity,test_f1
+Regresion_logistica,0.804,0.05,0.734,0.526,0.78,0.526
+Random_Forest,0.779,0.047,0.791,0.526,0.829,0.556
+LightGBM,0.754,0.03,0.77,0.474,0.829,0.514

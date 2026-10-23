@@ -1,6 +1,6 @@
 # TP Final — Predicción de mortalidad en insuficiencia cardíaca con MLflow
 
-**Estudiante:** Ricardo Aníbal Cheluja (verificar nombre antes de entregar)  
+**Estudiante:** Ricardo Aníbal Cheluja
 **Variante:** Experimentación y comparación de modelos con MLflow — Databricks  
 **Objetivo:** Comparar regresión logística, Random Forest y LightGBM para clasificar `DEATH_EVENT` usando 11 características clínicas basales.
 

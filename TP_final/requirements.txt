@@ -1,8 +1,0 @@
-ucimlrepo==0.0.7
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-lightgbm
-mlflow

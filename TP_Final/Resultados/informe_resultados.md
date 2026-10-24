@@ -27,7 +27,3 @@ Se selecciona **LR_barrido_C_10.0** por obtener el mayor ROC-AUC medio en la val
 - La comparación no implica utilidad clínica ni autoriza decisiones asistenciales.
 
 Fuente: UCI Heart Failure Clinical Records (dataset 519).
-
-
-
-Exportación verificada: la nueva ejecución del notebook 03 confirmó el guardado correcto de los resultados en el volumen de Databricks.

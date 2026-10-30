@@ -5,7 +5,7 @@
 
 ## Objetivo y datos
 
-Comparar algoritmos para clasificar el desenlace de fallecimiento durante el seguimiento (`DEATH_EVENT`) a partir de variables basales de pacientes con insuficiencia cardíaca. Se eligió un conjunto público, pequeño y pertinente a la formación cardiológica del estudiante, que permite reproducir la comparación sin datos de pacientes propios.
+Comparar algoritmos para clasificar el desenlace de fallecimiento durante el seguimiento (`DEATH_EVENT`) a partir de variables basales de pacientes con insuficiencia cardíaca. Se eligió un conjunto público y pertinente a la formación cardiológica, que permite reproducir la comparación sin datos de pacientes propios.
 
 Fuente: [UCI Heart Failure Clinical Records, dataset 519](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records). Se descarga mediante `ucimlrepo`, id 519. Contiene 299 pacientes: 96 fallecimientos (32,11%) y 203 sin el evento registrado. No se observaron valores faltantes ni duplicados exactos. Se utilizan 11 predictores basales; se excluye `time`, que aporta información del seguimiento posterior al momento basal.
 
